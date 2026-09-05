@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منصة التوجيهي</title>
+<style>
+  :root{
+    --paper:#F7F6F2; --ink:#1B2A4A; --ink-soft:#4A5A78; --line:#DDD9CE;
+    --accent:#2F6F6B; --accent-soft:#E4EFEE;
+    --white:#FFFFFF; --danger:#B4413A; --ok:#2F6F6B;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{ font-family:'Segoe UI', Tahoma, Arial, sans-serif; background:var(--paper); color:var(--ink); min-height:100vh; }
+  .screen{ display:none; min-height:100vh; }
+  .screen.active{ display:flex; flex-direction:column; }
+
+  /* دخول */
+  #login{ align-items:center; justify-content:center; padding:32px 20px; }
+  .login-card{ width:100%; max-width:400px; background:var(--white); border:1px solid var(--line); border-radius:4px; padding:32px 28px; }
+  .brand{ font-size:24px; font-weight:700; margin-bottom:4px; }
+  .brand-sub{ color:var(--ink-soft); font-size:13px; margin-bottom:22px; }
+  .role-tabs{ display:flex; gap:8px; margin-bottom:20px; }
+  .role-tab{ flex:1; text-align:center; padding:9px; border:1px solid var(--line); border-radius:3px; cursor:pointer; font-size:13px; }
+  .role-tab.active{ background:var(--ink); color:var(--white); border-color:var(--ink); font-weight:600; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12px; color:var(--ink-soft); margin-bottom:5px; }
+  .field input, .field select{ width:100%; padding:11px 13px; font-size:14px; border:1px solid var(--line); border-radius:3px; background:var(--paper); font-family:inherit; }
+  .track-choice{ display:flex; gap:8px; margin-bottom:14px; }
+  .track-btn{ flex:1; padding:10px; text-align:center; border-radius:3px; border:1.5px solid var(--line); cursor:pointer; font-size:13px; background:var(--white); }
+  .track-btn.sel{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent); font-weight:600; }
+  .btn-primary{ width:100%; padding:12px; margin-top:6px; background:var(--ink); color:var(--white); border:none; border-radius:3px; font-size:14px; font-weight:600; cursor:pointer; }
+  .btn-primary:hover{ background:#111d33; }
+  .err{ color:var(--danger); font-size:12px; margin-top:8px; display:none; }
+
+  /* بعد الدخول */
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px; background:var(--white); border-bottom:1px solid var(--line); }
+  .who b{ display:block; font-size:15px; }
+  .who span{ font-size:12px; color:var(--ink-soft); }
+  .badge{ font-size:11px; padding:4px 10px; border-radius:20px; font-weight:600; background:var(--accent-soft); color:var(--accent); }
+  .logout{ font-size:12px; color:var(--ink-soft); cursor:pointer; text-decoration:underline; }
+
+  .tabs{ display:flex; background:var(--white); border-bottom:1px solid var(--line); overflow-x:auto; }
+  .tab{ padding:13px 16px; font-size:13px; cursor:pointer; color:var(--ink-soft); white-space:nowrap; border-bottom:2px solid transparent; }
+  .tab.active{ color:var(--ink); font-weight:700; border-color:var(--ink); }
+
+  .content{ padding:18px; max-width:560px; margin:0 auto; width:100%; }
+  .pane{ display:none; }
+  .pane.active{ display:block; }
+  .section-title{ font-size:14px; font-weight:700; margin:18px 0 10px; }
+  .section-title:first-child{ margin-top:0; }
+
+  .card{ background:var(--white); border:1px solid var(--line); border-radius:4px; padding:15px; margin-bottom:10px; }
+  .session-card{ display:flex; align-items:center; gap:12px; }
+  .session-time{ text-align:center; min-width:52px; padding-left:12px; border-left:1px solid var(--line); }
+  .session-time .t{ font-weight:700; font-size:14px; }
+  .session-time .d{ font-size:10px; color:var(--ink-soft); }
+  .session-info{ flex:1; }
+  .session-info .subj{ font-weight:600; font-size:14px; }
+  .session-info .teacher{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  .join-btn{ padding:8px 14px; border-radius:3px; border:none; font-size:12px; font-weight:600; cursor:pointer; color:var(--white); white-space:nowrap; background:var(--accent); }
+
+  .lib-item{ display:flex; justify-content:space-between; align-items:center; }
+  .lib-item .meta{ font-size:12px; color:var(--ink-soft); margin-top:3px; }
+  .play-btn{ padding:7px 13px; border-radius:3px; border:1px solid var(--ink); background:transparent; font-size:12px; cursor:pointer; }
+  video{ width:100%; border-radius:4px; margin-top:10px; display:none; }
+
+  .q-item .qtext{ font-size:13px; margin-bottom:6px; }
+  .q-meta{ font-size:11px; color:var(--ink-soft); margin-bottom:8px; }
+  .status{ font-size:11px; padding:2px 8px; border-radius:12px; font-weight:600; }
+  .status.pending{ background:#FBEFE0; color:#A05A00; }
+  .status.answered{ background:var(--accent-soft); color:var(--accent); }
+  .answer-box{ background:var(--paper); border-radius:3px; padding:10px; margin-top:8px; font-size:13px; }
+  textarea{ width:100%; padding:10px; border:1px solid var(--line); border-radius:3px; font-family:inherit; font-size:13px; resize:vertical; min-height:60px; }
+  .btn-small{ padding:8px 14px; border:none; border-radius:3px; background:var(--ink); color:var(--white); font-size:12px; cursor:pointer; margin-top:8px; }
+
+  .bank-item{ display:flex; justify-content:space-between; align-items:center; }
+  .bank-item .tag{ font-size:11px; color:var(--ink-soft); }
+  .dl-btn{ font-size:12px; color:var(--ink); text-decoration:none; border:1px solid var(--line); padding:6px 12px; border-radius:3px; }
+
+  .empty{ color:var(--ink-soft); font-size:13px; text-align:center; padding:20px; }
+  input[type=file]{ font-size:13px; }
+  select.sm{ padding:8px; font-size:13px; border:1px solid var(--line); border-radius:3px; margin-bottom:8px; width:100%; }
+</style>
+</head>
+<body>
+
+<!-- شاشة الدخول -->
+<div id="login" class="screen active">
+  <div class="login-card">
+    <div class="brand">منصة التوجيهي</div>
+    <div class="brand-sub">حصصك، تسجيلاتك، وأسئلتك في مكان واحد</div>
+
+    <div class="role-tabs">
+      <div class="role-tab active" id="tab-student" onclick="setRole('student')">دخول الطالب/الطالبة</div>
+      <div class="role-tab" id="tab-teacher" onclick="setRole('teacher')">دخول معلمة</div>
+    </div>
+
+    <div class="field"><label>الاسم الكامل</label><input id="in-name" type="text" placeholder="اسمك"></div>
+    <div class="field"><label>رقم الجوال</label><input id="in-phone" type="tel" placeholder="07xxxxxxxx"></div>
+
+    <div id="student-fields">
+      <div class="field">
+        <label>المدرسة</label>
+        <select id="in-school">
+          <option value="">اختر المدرسة</option>
+          <option>مدرسة فاطمة الزهراء</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>الحقل</label>
+        <select id="in-track" class="sm" style="margin-bottom:0;">
+          <option value="">اختر الحقل</option>
+          <option>الحقل الصحي</option>
+          <option>الحقل الهندسي</option>
+          <option>حقل العلوم والتكنولوجيا</option>
+          <option>حقل اللغات والعلوم الاجتماعية</option>
+          <option>حقل القانون والعلوم الشرعية</option>
+          <option>حقل الأعمال</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="login()">دخول</button>
+    <div class="err" id="login-err">فضلاً عبّي كل الحقول المطلوبة</div>
+  </div>
+</div>
+
+<!-- شاشة الطالبة -->
+<div id="student-app" class="screen">
+  <div class="topbar">
+    <div class="who"><b id="s-name"></b><span id="s-school"></span></div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span class="badge" id="s-badge"></span>
+      <span class="logout" onclick="logout()">تسجيل خروج</span>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-p="s-schedule" onclick="showPane('s-schedule',this)">الجدول</div>
+    <div class="tab" data-p="s-library" onclick="showPane('s-library',this)">المكتبة</div>
+    <div class="tab" data-p="s-ask" onclick="showPane('s-ask',this)">اسأل المعلمة</div>
+    <div class="tab" data-p="s-myq" onclick="showPane('s-myq',this)">أسئلتي</div>
+    <div class="tab" data-p="s-publicq" onclick="showPane('s-publicq',this); renderPublicQuestions();">مكتبة الأسئلة</div>
+    <div class="tab" data-p="s-bank" onclick="showPane('s-bank',this)">بنك الأسئلة</div>
+  </div>
+  <div class="content">
+    <div class="pane active" id="s-schedule">
+      <div class="section-title">حصص اليوم</div>
+      <div id="s-sessions-list"></div>
+    </div>
+    <div class="pane" id="s-library">
+      <div class="section-title">تسجيلات فريقك</div>
+      <div id="s-recordings-list"></div>
+    </div>
+    <div class="pane" id="s-ask">
+      <div class="section-title">اسأل معلمة مادة</div>
+      <select class="sm" id="ask-subject"></select>
+      <textarea id="ask-text" placeholder="اكتبي سؤالك هنا..."></textarea>
+      <button class="btn-small" onclick="submitQuestion()">إرسال السؤال</button>
+    </div>
+    <div class="pane" id="s-myq">
+      <div class="section-title">أسئلتي وأجوبة معلماتي</div>
+      <div id="s-myq-list"></div>
+    </div>
+    <div class="pane" id="s-publicq">
+      <div class="section-title">أسئلة وأجوبة الطالبات — كل المدارس (فريقك)</div>
+      <div id="s-publicq-list"></div>
+    </div>
+    <div class="pane" id="s-bank">
+      <div class="section-title">بنك الأسئلة الوزارية — فريقك</div>
+      <div id="s-bank-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- شاشة المعلمة -->
+<div id="teacher-app" class="screen">
+  <div class="topbar">
+    <div class="who"><b id="t-name"></b><span>لوحة المعلمة</span></div>
+    <span class="logout" onclick="logout()">تسجيل خروج</span>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-p="t-schedule" onclick="showPane('t-schedule',this)">جدولي</div>
+    <div class="tab" data-p="t-upload" onclick="showPane('t-upload',this)">رفع تسجيل</div>
+    <div class="tab" data-p="t-questions" onclick="showPane('t-questions',this)">أسئلة الطالبات</div>
+    <div class="tab" data-p="t-reports" onclick="showPane('t-reports',this); renderReports();">التقارير</div>
+    <div class="tab" data-p="t-bank" onclick="showPane('t-bank',this); renderBankManager();">بنك الأسئلة</div>
+    <div class="tab" data-p="t-sessions" onclick="showPane('t-sessions',this); renderSessionManager();">إدارة الحصص</div>
+  </div>
+  <div class="content">
+    <div class="pane active" id="t-schedule">
+      <div class="section-title">حصصك اليوم</div>
+      <div id="t-sessions-list"></div>
+    </div>
+    <div class="pane" id="t-upload">
+      <div class="section-title">ربط تسجيل حصة من OneDrive</div>
+      <select class="sm" id="up-session"></select>
+      <div class="field">
+        <label>اسم الدرس (مثال: الدرس الأول - المعادلات)</label>
+        <input type="text" id="up-lesson" placeholder="اسم/رقم الدرس">
+      </div>
+      <div class="field">
+        <label>رابط الفيديو من قناة تلجرام (اضغطي مطوّلاً على الرسالة → نسخ الرابط)</label>
+        <input type="text" id="up-link" placeholder="https://t.me/اسم_القناة/123">
+      </div>
+      <button class="btn-small" onclick="uploadRecording()">حفظ الرابط ونشره للطالبات</button>
+    </div>
+    <div class="pane" id="t-questions">
+      <div class="section-title">أسئلة بانتظار الرد</div>
+      <div id="t-questions-list"></div>
+    </div>
+    <div class="pane" id="t-reports">
+      <div class="section-title">عدد الطالبات اللي دخلن المنصة</div>
+      <div id="rep-login-summary"></div>
+      <button class="btn-small" onclick="exportLoginCSV()">تصدير كشف الدخول (Excel/CSV)</button>
+
+      <div class="section-title">حضور حصة معيّنة (نشاط دخول التطبيق فقط — لحضور تيمز الفعلي حمّلي تقرير تيمز مباشرة)</div>
+      <select class="sm" id="rep-session" onchange="renderAttendanceList()"></select>
+      <div id="rep-attendance-list"></div>
+
+      <div class="section-title">الأكثر تفاعلاً (عدد الأسئلة لكل طالبة)</div>
+      <div id="rep-engagement-list"></div>
+    </div>
+    <div class="pane" id="t-bank">
+      <div class="section-title">إضافة سؤال وزاري سابق للبنك (يظهر لكل مدارس نفس الفريق)</div>
+      <select class="sm" id="bank-track">
+        <option>الحقل الصحي</option>
+        <option>الحقل الهندسي</option>
+        <option>حقل العلوم والتكنولوجيا</option>
+        <option>حقل اللغات والعلوم الاجتماعية</option>
+        <option>حقل القانون والعلوم الشرعية</option>
+        <option>حقل الأعمال</option>
+      </select>
+      <div class="field"><label>المادة</label><input type="text" id="bank-subject" placeholder="رياضيات / انجليزي / مهارات اتصال"></div>
+      <div class="field"><label>السنة</label><input type="text" id="bank-year" placeholder="2025"></div>
+      <div class="field"><label>ملف الأسئلة (Word / Excel / PowerPoint / PDF)</label><input type="file" id="bank-qfile" accept=".doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf"></div>
+      <div class="field"><label>ملف الحل (Word / Excel / PowerPoint / PDF)</label><input type="file" id="bank-afile" accept=".doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf"></div>
+      <button class="btn-small" id="bank-add-btn" onclick="addBankItem()">إضافة للبنك</button>
+
+      <div class="section-title">ملفات البنك الحالية (حذف)</div>
+      <div id="bank-manager-list"></div>
+    </div>
+    <div class="pane" id="t-sessions">
+      <div class="section-title">إضافة حصة جديدة</div>
+      <select class="sm" id="ns-track">
+        <option>الحقل الصحي</option>
+        <option>الحقل الهندسي</option>
+        <option>حقل العلوم والتكنولوجيا</option>
+        <option>حقل اللغات والعلوم الاجتماعية</option>
+        <option>حقل القانون والعلوم الشرعية</option>
+        <option>حقل الأعمال</option>
+      </select>
+      <div class="field"><label>المادة</label><input type="text" id="ns-subject" placeholder="رياضيات"></div>
+      <div class="field"><label>اسم المعلمة</label><input type="text" id="ns-teacher" placeholder="أ. سارة خليل"></div>
+      <div class="field"><label>الوقت</label><input type="text" id="ns-time" placeholder="4:00"></div>
+      <div class="field"><label>المدة</label><input type="text" id="ns-duration" placeholder="45د"></div>
+      <div class="field"><label>رابط تيمز</label><input type="text" id="ns-link" placeholder="https://teams.microsoft.com/..."></div>
+      <button class="btn-small" onclick="addSession()">إضافة الحصة</button>
+
+      <div class="section-title">الحصص الحالية (تعديل/حذف)</div>
+      <div id="sessions-manager-list"></div>
+
+      <div class="section-title">التسجيلات المرفوعة (حذف)</div>
+      <div id="recordings-manager-list"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ===== الاتصال الحقيقي بقاعدة بيانات Supabase ===== */
+const SUPABASE_URL = "https://miuvpazzpyckjmhjtbmf.supabase.co";
+const SUPABASE_KEY = "sb_publishable_9DLgnYGd9v3fM8dhuLvG5g_55WGnSSF";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let session = { role:"student", name:"", phone:"", school:"", track:"" };
+
+function setRole(r){
+  session.role = r;
+  document.getElementById('tab-student').className = 'role-tab' + (r==='student'?' active':'');
+  document.getElementById('tab-teacher').className = 'role-tab' + (r==='teacher'?' active':'');
+  document.getElementById('student-fields').style.display = r==='student' ? 'block' : 'none';
+}
+
+function pickTrack(t){ /* لم تعد مستخدمة — الاختيار الآن من قائمة منسدلة (in-track) */ }
+
+async function login(){
+  session.name = document.getElementById('in-name').value.trim();
+  session.phone = document.getElementById('in-phone').value.trim();
+  if(session.role === 'student'){
+    session.school = document.getElementById('in-school').value;
+    session.track = document.getElementById('in-track').value;
+    if(!session.name || !session.phone || !session.school || !session.track){
+      document.getElementById('login-err').style.display = 'block'; return;
+    }
+    document.getElementById('login-err').style.display = 'none';
+
+    // حفظ/تحديث الطالبة + تسجيل دخول جديد بقاعدة البيانات الحقيقية
+    await sb.from('students').upsert({ name:session.name, phone:session.phone, school:session.school, track:session.track }, { onConflict:'phone' });
+    await sb.from('login_log').insert({ student_name:session.name, student_phone:session.phone, school:session.school, track:session.track });
+
+    await renderStudentApp();
+    switchScreen('student-app');
+  } else {
+    if(!session.name || !session.phone){
+      document.getElementById('login-err').style.display = 'block'; return;
+    }
+    document.getElementById('login-err').style.display = 'none';
+    await renderTeacherApp();
+    switchScreen('teacher-app');
+  }
+}
+
+function logout(){
+  if(session.role === 'student' && session.phone){
+    sb.from('login_log').update({ ended_at: new Date().toISOString() })
+      .eq('student_phone', session.phone).is('ended_at', null)
+      .then(() => location.reload());
+  } else {
+    location.reload();
+  }
+}
+
+function switchScreen(id){
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showPane(id, tabEl){
+  const parent = tabEl.closest('.screen');
+  parent.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  tabEl.classList.add('active');
+}
+
+/* ===== واجهة الطالبة ===== */
+async function renderStudentApp(){
+  document.getElementById('s-name').textContent = session.name;
+  document.getElementById('s-school').textContent = session.school;
+  const b = document.getElementById('s-badge');
+  b.textContent = session.track; b.className = 'badge';
+
+  const { data: sessions } = await sb.from('sessions').select('*').eq('track', session.track);
+  const wrap = document.getElementById('s-sessions-list');
+  wrap.innerHTML = (sessions && sessions.length) ? '' : '<div class="empty">لا توجد حصص اليوم لفريقك</div>';
+  (sessions||[]).forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'card session-card';
+    el.innerHTML = `
+      <div class="session-time"><div class="t">${s.time}</div><div class="d">${s.duration}</div></div>
+      <div class="session-info"><div class="subj">${s.subject}</div><div class="teacher">${s.teacher_name}</div></div>
+      <button class="join-btn" onclick="window.open('${s.meeting_link}','_blank')">دخول عبر تيمز</button>
+    `;
+    wrap.appendChild(el);
+  });
+
+  const subs = [...new Set((sessions||[]).map(s=>s.subject))];
+  document.getElementById('ask-subject').innerHTML = subs.map(s=>`<option>${s}</option>`).join('');
+
+  await renderStudentLibrary();
+  await renderMyQuestions();
+  await renderBank();
+}
+
+async function renderStudentLibrary(){
+  const { data: list } = await sb.from('recordings').select('*').eq('track', session.track).order('lesson_order');
+  const wrap = document.getElementById('s-recordings-list');
+  wrap.innerHTML = '';
+  if(!list || !list.length){ wrap.innerHTML = '<div class="empty">لا توجد تسجيلات بعد</div>'; return; }
+
+  const bySubject = {};
+  list.forEach(r => { (bySubject[r.subject] = bySubject[r.subject] || []).push(r); });
+
+  Object.keys(bySubject).forEach(subject => {
+    const subjWrap = document.createElement('div');
+    subjWrap.style.marginBottom = '18px';
+    const title = document.createElement('div');
+    title.style.cssText = 'font-size:13px; font-weight:700; color:var(--ink-soft); margin-bottom:8px;';
+    title.textContent = subject;
+    subjWrap.appendChild(title);
+
+    bySubject[subject].forEach(r => {
+      const el = document.createElement('div');
+      el.className = 'card lib-item';
+      const d = new Date(r.created_at).toLocaleDateString('ar');
+      el.innerHTML = `
+        <div><div>${r.lesson_order}. ${r.lesson_name}</div><div class="meta">${d}</div></div>
+        <button class="play-btn" onclick="window.open('${r.video_url}','_blank')">مشاهدة على تلجرام</button>
+      `;
+      subjWrap.appendChild(el);
+    });
+    wrap.appendChild(subjWrap);
+  });
+}
+
+async function submitQuestion(){
+  const subject = document.getElementById('ask-subject').value;
+  const text = document.getElementById('ask-text').value.trim();
+  if(!text) return;
+  await sb.from('questions').insert({ student_name:session.name, student_phone:session.phone, track:session.track, subject, question_text:text, status:'pending' });
+  document.getElementById('ask-text').value = '';
+  await renderMyQuestions();
+  alert('تم إرسال سؤالك للمعلمة');
+}
+
+async function renderMyQuestions(){
+  const { data: mine } = await sb.from('questions').select('*').eq('student_phone', session.phone).order('created_at', { ascending:false });
+  const wrap = document.getElementById('s-myq-list');
+  wrap.innerHTML = (mine && mine.length) ? '' : '<div class="empty">ما سألتِ أي سؤال بعد</div>';
+  (mine||[]).forEach(q => {
+    const el = document.createElement('div');
+    el.className = 'card q-item';
+    el.innerHTML = `
+      <div class="q-meta">${q.subject} <span class="status ${q.status}">${q.status==='pending'?'بانتظار الرد':'تم الرد'}</span></div>
+      <div class="qtext">${q.question_text}</div>
+      ${q.answer_text ? `<div class="answer-box">${q.answer_text}</div>` : ''}
+    `;
+    wrap.appendChild(el);
+  });
+}
+
+async function renderBank(){
+  const { data: list } = await sb.from('question_bank').select('*').eq('track', session.track);
+  const wrap = document.getElementById('s-bank-list');
+  wrap.innerHTML = (list && list.length) ? '' : '<div class="empty">لا توجد ملفات بعد</div>';
+  (list||[]).forEach(bnk => {
+    const el = document.createElement('div');
+    el.className = 'card bank-item';
+    el.innerHTML = `<div><div>${bnk.name}</div><div class="tag">${bnk.subject} — ${bnk.year}</div></div>
+      <div style="display:flex; gap:6px;">
+        <span class="dl-btn" onclick="window.open('${bnk.q_link}','_blank')">الأسئلة</span>
+        <span class="dl-btn" onclick="window.open('${bnk.a_link}','_blank')">الحل</span>
+      </div>`;
+    wrap.appendChild(el);
+  });
+}
+
+async function renderPublicQuestions(){
+  const { data: answered } = await sb.from('questions').select('*').eq('track', session.track).eq('status','answered').order('created_at', { ascending:false });
+  const wrap = document.getElementById('s-publicq-list');
+  wrap.innerHTML = (answered && answered.length) ? '' : '<div class="empty">لا توجد أسئلة مجابة بعد لفريقك</div>';
+  (answered||[]).forEach(q => {
+    const el = document.createElement('div');
+    el.className = 'card q-item';
+    el.innerHTML = `
+      <div class="q-meta">${q.subject} — سألتها: ${q.student_name}</div>
+      <div class="qtext">${q.question_text}</div>
+      <div class="answer-box">${q.answer_text}</div>
+    `;
+    wrap.appendChild(el);
+  });
+}
+
+/* ===== واجهة المعلمة ===== */
+async function renderTeacherApp(){
+  document.getElementById('t-name').textContent = session.name;
+
+  const { data: sessions } = await sb.from('sessions').select('*');
+  const wrap = document.getElementById('t-sessions-list');
+  wrap.innerHTML = '';
+  (sessions||[]).forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'card session-card';
+    el.innerHTML = `
+      <div class="session-time"><div class="t">${s.time}</div><div class="d">${s.duration}</div></div>
+      <div class="session-info"><div class="subj">${s.subject}</div><div class="teacher">فريق ${s.track}</div></div>
+      <button class="join-btn" onclick="window.open('${s.meeting_link}','_blank')">بدء عبر تيمز</button>
+    `;
+    wrap.appendChild(el);
+  });
+
+  document.getElementById('up-session').innerHTML = (sessions||[]).map(s => `<option value="${s.id}">${s.subject} — ${s.track} — ${s.time}</option>`).join('');
+  document.getElementById('rep-session').innerHTML = (sessions||[]).map(s => `<option value="${s.id}">${s.subject} — ${s.track}</option>`).join('');
+
+  await renderTeacherQuestions();
+}
+
+async function uploadRecording(){
+  const sessId = parseInt(document.getElementById('up-session').value);
+  const lessonName = document.getElementById('up-lesson').value.trim();
+  const link = document.getElementById('up-link').value.trim();
+  if(!lessonName || !link){ alert('عبّي اسم الدرس والصقي رابط الفيديو من تلجرام'); return; }
+
+  const { data: sessArr } = await sb.from('sessions').select('*').eq('id', sessId);
+  const s = sessArr[0];
+  const { data: existing } = await sb.from('recordings').select('id').eq('subject', s.subject).eq('track', s.track);
+  const nextOrder = (existing ? existing.length : 0) + 1;
+
+  await sb.from('recordings').insert({ session_id:sessId, subject:s.subject, track:s.track, lesson_name:lessonName, lesson_order:nextOrder, video_url:link });
+  document.getElementById('up-lesson').value = '';
+  document.getElementById('up-link').value = '';
+  alert('تم حفظ الرابط! صار التسجيل ظاهر لطالبات فريق ' + s.track + ' بمكتبة التسجيلات');
+}
+
+async function renderTeacherQuestions(){
+  const { data: pending } = await sb.from('questions').select('*').eq('status','pending');
+  const wrap = document.getElementById('t-questions-list');
+  wrap.innerHTML = (pending && pending.length) ? '' : '<div class="empty">لا توجد أسئلة جديدة</div>';
+  (pending||[]).forEach(q => {
+    const el = document.createElement('div');
+    el.className = 'card q-item';
+    el.innerHTML = `
+      <div class="q-meta">${q.subject} — ${q.student_name}</div>
+      <div class="qtext">${q.question_text}</div>
+      <textarea id="ans-${q.id}" placeholder="اكتبي الجواب هنا..."></textarea>
+      <button class="btn-small" onclick="answerQuestion(${q.id})">إرسال الجواب</button>
+    `;
+    wrap.appendChild(el);
+  });
+}
+
+async function answerQuestion(id){
+  const text = document.getElementById('ans-'+id).value.trim();
+  if(!text) return;
+  await sb.from('questions').update({ answer_text:text, status:'answered' }).eq('id', id);
+  await renderTeacherQuestions();
+  alert('تم إرسال الجواب للطالبة');
+}
+
+/* ===== التقارير ===== */
+async function renderReports(){
+  const { data: logs } = await sb.from('login_log').select('*');
+  const uniquePhones = [...new Set((logs||[]).map(l => l.student_phone))];
+  document.getElementById('rep-login-summary').innerHTML = `
+    <div class="card">
+      <div style="font-size:22px; font-weight:700;">${uniquePhones.length}</div>
+      <div style="font-size:12px; color:var(--ink-soft);">طالبة مختلفة دخلت التطبيق (${(logs||[]).length} عملية دخول إجمالاً)</div>
+    </div>
+  `;
+
+  await renderAttendanceList();
+
+  const { data: questions } = await sb.from('questions').select('*');
+  const counts = {};
+  (questions||[]).forEach(q => { counts[q.student_name] = (counts[q.student_name]||0) + 1; });
+  const rows = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const engWrap = document.getElementById('rep-engagement-list');
+  engWrap.innerHTML = rows.length ? '' : '<div class="empty">لا يوجد تفاعل بعد</div>';
+  rows.forEach(([name,count]) => {
+    const el = document.createElement('div');
+    el.className = 'card lib-item';
+    el.innerHTML = `<div>${name}</div><div class="meta">${count} سؤال</div>`;
+    engWrap.appendChild(el);
+  });
+}
+
+async function renderAttendanceList(){
+  const sessSel = document.getElementById('rep-session');
+  if(!sessSel.value) return;
+  const sessId = parseInt(sessSel.value);
+  const { data: sessArr } = await sb.from('sessions').select('*').eq('id', sessId);
+  const s = sessArr[0];
+  if(!s) return;
+
+  const { data: logs } = await sb.from('login_log').select('*').eq('track', s.track);
+  const students = (logs||[]).filter((v,i,arr) => arr.findIndex(x=>x.student_phone===v.student_phone) === i);
+
+  const { data: att } = await sb.from('attendance').select('*').eq('session_id', sessId);
+  const attMap = {};
+  (att||[]).forEach(a => attMap[a.student_phone] = a.status);
+
+  const wrap = document.getElementById('rep-attendance-list');
+  wrap.innerHTML = students.length ? '' : '<div class="empty">لا توجد طالبات مسجّلات لهذا الفريق بعد</div>';
+
+  let presentCount = 0, absentCount = 0;
+  students.forEach(st => {
+    const cur = attMap[st.student_phone] || 'absent';
+    if(cur === 'present') presentCount++; else absentCount++;
+    const el = document.createElement('div');
+    el.className = 'card lib-item';
+    el.innerHTML = `
+      <div>${st.student_name}</div>
+      <select class="sm" style="width:110px; margin-bottom:0;" onchange="setAttendance(${sessId}, '${st.student_phone}', this.value)">
+        <option value="present" ${cur==='present'?'selected':''}>حاضرة</option>
+        <option value="absent" ${cur==='absent'?'selected':''}>غائبة</option>
+      </select>
+    `;
+    wrap.appendChild(el);
+  });
+  const summary = document.createElement('div');
+  summary.className = 'meta';
+  summary.style.marginTop = '6px';
+  summary.textContent = `حاضرة: ${presentCount} — غائبة: ${absentCount}`;
+  wrap.appendChild(summary);
+}
+
+async function exportLoginCSV(){
+  const { data: logs } = await sb.from('login_log').select('*').order('created_at');
+  if(!logs || !logs.length){ alert('لا توجد بيانات دخول بعد'); return; }
+
+  let csv = '\uFEFF' + 'الاسم,المدرسة,الحقل,وقت الدخول,وقت الخروج,المدة (دقيقة)\n';
+  logs.forEach(l => {
+    const start = new Date(l.created_at);
+    let durationMin = '';
+    if(l.ended_at){
+      durationMin = Math.round((new Date(l.ended_at) - start) / 60000);
+    } else {
+      durationMin = 'لم تسجّل خروج';
+    }
+    const startStr = start.toLocaleString('ar');
+    const endStr = l.ended_at ? new Date(l.ended_at).toLocaleString('ar') : '—';
+    csv += `"${l.student_name}","${l.school}","${l.track}","${startStr}","${endStr}","${durationMin}"\n`;
+  });
+
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `كشف_دخول_الطالبات_${new Date().toLocaleDateString('en-CA')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function setAttendance(sessId, phone, value){
+  await sb.from('attendance').upsert({ session_id:sessId, student_phone:phone, status:value }, { onConflict:'session_id,student_phone' });
+  await renderAttendanceList();
+}
+
+async function addBankItem(){
+  const track = document.getElementById('bank-track').value;
+  const subject = document.getElementById('bank-subject').value.trim();
+  const year = document.getElementById('bank-year').value.trim();
+  const qFile = document.getElementById('bank-qfile').files[0];
+  const aFile = document.getElementById('bank-afile').files[0];
+  if(!subject || !year || !qFile || !aFile){ alert('عبّي كل الحقول واختاري الملفين'); return; }
+
+  const btn = document.getElementById('bank-add-btn');
+  btn.disabled = true; btn.textContent = 'جاري الرفع...';
+
+  const stamp = Date.now();
+  const qPath = `${track}/${subject}-${year}-اسئلة-${stamp}-${qFile.name}`;
+  const aPath = `${track}/${subject}-${year}-حل-${stamp}-${aFile.name}`;
+
+  const { error: qErr } = await sb.storage.from('question-bank').upload(qPath, qFile);
+  const { error: aErr } = await sb.storage.from('question-bank').upload(aPath, aFile);
+  if(qErr || aErr){
+    alert('حصل خطأ بالرفع: ' + (qErr?.message || aErr?.message));
+    btn.disabled = false; btn.textContent = 'إضافة للبنك';
+    return;
+  }
+  const qLink = sb.storage.from('question-bank').getPublicUrl(qPath).data.publicUrl;
+  const aLink = sb.storage.from('question-bank').getPublicUrl(aPath).data.publicUrl;
+
+  await sb.from('question_bank').insert({ subject, track, year, name:`وزاري ${year} - ${subject} ${track}`, q_link:qLink, a_link:aLink });
+  document.getElementById('bank-subject').value = '';
+  document.getElementById('bank-year').value = '';
+  document.getElementById('bank-qfile').value = '';
+  document.getElementById('bank-afile').value = '';
+  btn.disabled = false; btn.textContent = 'إضافة للبنك';
+  alert('تمت الإضافة للبنك، وصارت ظاهرة لكل طالبات ' + track + ' بكل المدارس');
+  await renderBankManager();
+}
+
+/* ===== إدارة الحصص (بدون الحاجة للدخول على Supabase مباشرة) ===== */
+async function addSession(){
+  const track = document.getElementById('ns-track').value;
+  const subject = document.getElementById('ns-subject').value.trim();
+  const teacher_name = document.getElementById('ns-teacher').value.trim();
+  const time = document.getElementById('ns-time').value.trim();
+  const duration = document.getElementById('ns-duration').value.trim();
+  const meeting_link = document.getElementById('ns-link').value.trim();
+  if(!subject || !teacher_name || !time || !duration || !meeting_link){ alert('عبّي كل الحقول'); return; }
+  await sb.from('sessions').insert({ track, subject, teacher_name, time, duration, meeting_link });
+  ['ns-subject','ns-teacher','ns-time','ns-duration','ns-link'].forEach(id => document.getElementById(id).value = '');
+  alert('تمت إضافة الحصة بنجاح');
+  await renderSessionManager();
+}
+
+async function renderSessionManager(){
+  const { data: sessions } = await sb.from('sessions').select('*').order('track');
+  const wrap = document.getElementById('sessions-manager-list');
+  wrap.innerHTML = (sessions && sessions.length) ? '' : '<div class="empty">لا توجد حصص بعد</div>';
+  (sessions||[]).forEach(s => {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.innerHTML = `
+      <div style="font-size:12px; color:var(--ink-soft); margin-bottom:6px;">${s.track} — ${s.subject} — ${s.teacher_name}</div>
+      <input type="text" id="edit-link-${s.id}" value="${s.meeting_link || ''}" style="width:100%; padding:8px; font-size:12px; border:1px solid var(--line); border-radius:3px; margin-bottom:8px;">
+      <div style="display:flex; gap:8px;">
+        <button class="btn-small" style="margin-top:0;" onclick="updateSessionLink(${s.id})">حفظ الرابط</button>
+        <button class="btn-small" style="margin-top:0; background:var(--danger);" onclick="deleteSession(${s.id})">حذف الحصة</button>
+      </div>
+    `;
+    wrap.appendChild(el);
+  });
+  await renderRecordingsManager();
+}
+
+async function renderRecordingsManager(){
+  const { data: recs } = await sb.from('recordings').select('*').order('track').order('subject').order('lesson_order');
+  const wrap = document.getElementById('recordings-manager-list');
+  wrap.innerHTML = (recs && recs.length) ? '' : '<div class="empty">لا توجد تسجيلات مرفوعة بعد</div>';
+  (recs||[]).forEach(r => {
+    const el = document.createElement('div');
+    el.className = 'card lib-item';
+    el.innerHTML = `
+      <div><div>${r.track} — ${r.subject}</div><div class="meta">${r.lesson_order}. ${r.lesson_name}</div></div>
+      <button class="btn-small" style="margin-top:0; background:var(--danger);" onclick="deleteRecording(${r.id})">حذف</button>
+    `;
+    wrap.appendChild(el);
+  });
+}
+
+async function deleteRecording(id){
+  if(!confirm('متأكدة من حذف هذا التسجيل؟')) return;
+  await sb.from('recordings').delete().eq('id', id);
+  await renderRecordingsManager();
+}
+
+async function renderBankManager(){
+  const { data: items } = await sb.from('question_bank').select('*').order('track').order('subject');
+  const wrap = document.getElementById('bank-manager-list');
+  wrap.innerHTML = (items && items.length) ? '' : '<div class="empty">لا توجد ملفات بعد</div>';
+  (items||[]).forEach(b => {
+    const el = document.createElement('div');
+    el.className = 'card lib-item';
+    el.innerHTML = `
+      <div><div>${b.name}</div><div class="meta">${b.track} — ${b.year}</div></div>
+      <button class="btn-small" style="margin-top:0; background:var(--danger);" onclick="deleteBankItem(${b.id})">حذف</button>
+    `;
+    wrap.appendChild(el);
+  });
+}
+
+async function deleteBankItem(id){
+  if(!confirm('متأكدة من حذف هذا الملف؟')) return;
+  await sb.from('question_bank').delete().eq('id', id);
+  await renderBankManager();
+}
+
+async function updateSessionLink(id){
+  const link = document.getElementById('edit-link-'+id).value.trim();
+  await sb.from('sessions').update({ meeting_link:link }).eq('id', id);
+  alert('تم تحديث الرابط');
+}
+
+async function deleteSession(id){
+  if(!confirm('متأكدة من حذف هذه الحصة؟')) return;
+  await sb.from('sessions').delete().eq('id', id);
+  await renderSessionManager();
+}
+</script>
+</body>
+</html>
